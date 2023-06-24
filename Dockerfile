@@ -1,25 +1,41 @@
-FROM alpine:latest
+FROM golang:latest AS builder
+WORKDIR /app
 
-LABEL org.opencontainers.image.source https://github.com/tijjjy/Tailscale-DERP-Docker
-
-#Install Tailscale and requirements
-RUN apk add curl iptables
-
-#Install GO and Tailscale DERPER
-RUN apk add go --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+# https://tailscale.com/kb/1118/custom-derp-servers/
 RUN go install tailscale.com/cmd/derper@main
 
-#Install Tailscale and Tailscaled
-RUN apk add tailscale --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+FROM ubuntu:jammy
+WORKDIR /app
 
-#Copy init script
+LABEL org.opencontainers.image.source https://github.com/cmj2002/Tailscale-DERP-Docker
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apt-utils && \
+    apt-get install -y ca-certificates curl && \
+    apt-get clean
+
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list
+
+RUN apt-get update && \
+    apt-get install -y tailscale && \
+    apt-get clean
+
+RUN mkdir /app/certs
+
+ENV DERP_DOMAIN your-hostname.com
+ENV DERP_CERT_MODE letsencrypt
+ENV DERP_CERT_DIR /app/certs
+ENV DERP_ADDR :443
+ENV DERP_STUN true
+ENV DERP_HTTP_PORT 80
+ENV TAILSCALE_SLEEP 2
+
+COPY --from=builder /go/bin/derper .
+
 COPY init.sh /init.sh
 RUN chmod +x /init.sh
-
-#Derper Web Ports
-EXPOSE 80
-EXPOSE 443/tcp
-#STUN
-EXPOSE 3478/udp
 
 ENTRYPOINT /init.sh

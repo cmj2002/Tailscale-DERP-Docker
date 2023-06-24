@@ -1,14 +1,31 @@
-#!/usr/bin/env sh
+#!/bin/bash
+
+# exit when any command fails
+set -e
+
+# create a tun device
+mkdir -p /dev/net
+mknod /dev/net/tun c 10 200
+chmod 600 /dev/net/tun
+
+# get comma separated list of arg $TAILSCALE_ARGS and convert to array
+IFS=',' read -r -a TAILSCALE_ARGS <<< "$TAILSCALE_ARGS"
 
 #Start tailscaled and connect to tailnet
 /usr/sbin/tailscaled --state=/var/lib/tailscale/tailscaled.state >> /dev/stdout &
-/usr/bin/tailscale up --accept-routes=true --accept-dns=true --auth-key $TAILSCALE_AUTH_KEY >> /dev/stdout &
 
-#Check for and or create certs directory
-if [[ ! -d "/root/derper/$TAILSCALE_DERP_HOSTNAME" ]]
-then
-    mkdir -p /root/derper/$TAILSCALE_DERP_HOSTNAME
-fi
+# sleep to wait for the daemon to start, default 2 seconds
+sleep "$TAILSCALE_SLEEP"
 
-#Start Tailscale derp server
-/root/go/bin/derper --hostname $TAILSCALE_DERP_HOSTNAME --bootstrap-dns-names $TAILSCALE_DERP_HOSTNAME -certmode $TAILSCALE_DERP_CERTMODE -certdir /root/derper/$TAILSCALE_DERP_HOSTNAME --stun --verify-clients=$TAILSCALE_DERP_VERIFY_CLIENTS
+/usr/bin/tailscale up --authkey="$TAILSCALE_AUTHKEY" "${TAILSCALE_ARGS[@]}" >> /dev/stdout &
+
+# sleep to wait for the daemon to start, default 2 seconds
+sleep "$TAILSCALE_SLEEP"
+
+/app/derper --hostname="$DERP_DOMAIN" \
+    --certmode="$DERP_CERT_MODE" \
+    --certdir="$DERP_CERT_DIR" \
+    --a="$DERP_ADDR" \
+    --stun="$DERP_STUN"  \
+    --http-port="$DERP_HTTP_PORT" \
+    --verify-clients=true\
