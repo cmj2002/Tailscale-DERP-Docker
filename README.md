@@ -15,3 +15,4 @@ Notes:
 - If your server's performance is too low, you may need to adjust TAILSCALE_SLEEP so that tailscaled has more time to start.
 - If you want to use healthcheck and wondering how to write `derpmap.json`, use [this](https://login.tailscale.com/derpmap/default) as a example. You don't need to include official nodes, just include your custom derper.
 - I did not enable the mesh functionality of derper (because I only deployed one derper), so it is normal for `derpprobe` to show that the mesh detection failed.
+- It's strange that even though Derp Map has provided the IP address, `derpprobe` still insists on resolving the domain via DNS. If you haven't set the domain name for derper in your DNS provider, you need to [modify the `/etc/hosts` file of the container](https://docs.docker.com/compose/compose-file/05-services/#extra_hosts) to specify the IP for the domain name.
