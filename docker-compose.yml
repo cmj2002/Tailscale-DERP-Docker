@@ -1,7 +1,7 @@
 version: '3'
 services:
   derp:
-    image: caomingjun.azurecr.io/derp:v3.0
+    image: caomingjun/derp:v3.0
     container_name: derp
     restart: always
     environment:
