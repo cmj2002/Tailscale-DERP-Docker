@@ -18,3 +18,13 @@ services:
       # - 80:80
     volumes:
       - ./data:/var/lib/tailscale
+      ## If you want to enable healthcheck, uncomment the following line and pass derpmap.json to the container
+      # - ./derpmap.json:/derpmap.json:ro
+
+    ## Optional healthcheck
+    # healthcheck:
+    #   test: ["CMD", "/bin/bash", "/health.sh"]
+    #   interval: 5m
+    #   timeout: 30s
+    #   retries: 3
+    #   start_period: 1m

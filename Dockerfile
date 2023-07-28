@@ -4,6 +4,9 @@ WORKDIR /app
 # https://tailscale.com/kb/1118/custom-derp-servers/
 RUN go install tailscale.com/cmd/derper@main
 
+# use for healthcheck
+RUN go install tailscale.com/cmd/derpprobe@latest
+
 FROM ubuntu:jammy
 WORKDIR /app
 
@@ -34,8 +37,11 @@ ENV DERP_HTTP_PORT 80
 ENV TAILSCALE_SLEEP 2
 
 COPY --from=builder /go/bin/derper .
+COPY --from=builder /go/bin/derpprobe .
 
 COPY init.sh /init.sh
+COPY health.sh /health.sh
 RUN chmod +x /init.sh
+RUN chmod +x /health.sh
 
 ENTRYPOINT /init.sh
