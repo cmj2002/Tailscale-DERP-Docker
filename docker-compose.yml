@@ -14,13 +14,7 @@ services:
       - NET_ADMIN
     ports:
       - 3478:3478/udp
-      - 80:80
+      ## Do not expose 80 to the public, use a reverse proxy instead
+      # - 80:80
     volumes:
       - ./data:/var/lib/tailscale
-    networks:
-      - backend
-
-networks:
-    backend:
-        external: true
-        name: backend
